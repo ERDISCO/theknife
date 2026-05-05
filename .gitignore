@@ -1,0 +1,16 @@
+# compilazione java
+target/
+*.class
+*.jar
+
+# File di configurazione IDE
+.idea/
+.eclipse/
+*.iml
+.project
+.classpath
+.settings/
+
+# File di sistema
+.DS_Store
+Thumbs.db
