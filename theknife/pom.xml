@@ -6,7 +6,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>it.uninsubria</groupId>
+    <groupId>theknife</groupId>
     <artifactId>theknife</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
@@ -19,8 +19,15 @@
     </properties>
 
     <dependencies>
+    <!-- Driver PostgreSQL per JDBC -->
+		<dependency>
+		  <groupId>org.postgresql</groupId>
+		  <artifactId>postgresql</artifactId>
+		  <version>42.7.3</version>
+		</dependency>
 
-        
+
+			        
     </dependencies>
 
     <build>
