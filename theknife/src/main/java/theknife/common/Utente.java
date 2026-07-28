@@ -6,7 +6,8 @@ import java.sql.Date;
 /**
  * Rappresenta un utente registrato (cliente o gestore).
  * La password NON viene mai inviata al client dopo il login.
- * @author NomeCognome Matricola Sede
+ * @author Esau Argueta 761748 
+ * @author Ayoub Hammou 761589
  */
 public class Utente implements Serializable {
     private int    id;
