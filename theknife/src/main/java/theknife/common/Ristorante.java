@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Rappresenta un ristorante nella piattaforma TheKnife.
  * Usata sia dal server (per query DB) che dal client (per visualizzazione).
- * @author Ayoub Hammou  761589
+ * @author Ayoub Hammou 761589
  * @author Esau Argueta 761748
  */
 public class Ristorante implements Serializable {
