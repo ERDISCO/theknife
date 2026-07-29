@@ -9,6 +9,8 @@ import java.io.Serializable;
  * @author Esau Alessandro Argueta Zepeda 761748
  */
 public class Ristorante implements Serializable {
+	private static final long serialVersionUID = 2L;
+	
     private int    id;
     private String nome;
     private String location;

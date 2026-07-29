@@ -9,6 +9,7 @@ import java.io.Serializable;
  */
 
 public class Recensione implements Serializable {
+	private static final long serialVersionUID = 1L;
     private int    id_recensione;
     private int    ristoranteId;
     private int    utenteId;

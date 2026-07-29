@@ -9,11 +9,11 @@ import java.util.Map;
  * Il client manda un Messaggio con operazione + parametri.
  * Il server risponde con un Messaggio con esito + dati.
  *
- * @author Ayoub Hammou 761589
- * @author Esau Argueta 761748
+ * @author Ayoub Hammou 					761589
+ * @author Esau Alessandro Argueta Zepeda 	761748
  */
 public class Messaggio implements Serializable {
-
+	private static final long serialVersionUID = 4L;
     // Costanti per le operazioni (evita stringhe sparse nel codice)
     public static final String OP_LOGIN           = "LOGIN";
     public static final String OP_REGISTRA        = "REGISTRA";
