@@ -4,8 +4,8 @@ import java.io.Serializable;
 /**
  * Rappresenta una recensione scritta da un cliente per un ristorante.
  * Può contenere una risposta del gestore (massimo una).
- * @author Ayoub Hammou 761589
- * @author Esau Alessandro Argueta Zepeda 761748
+ * @author Ayoub Hammou						761589
+ * @author Esau Alessandro Argueta Zepeda 	761748
  */
 
 public class Recensione implements Serializable {
