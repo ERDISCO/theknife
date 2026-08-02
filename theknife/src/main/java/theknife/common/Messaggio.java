@@ -9,12 +9,13 @@ import java.util.Map;
  * Il client manda un Messaggio con operazione + parametri.
  * Il server risponde con un Messaggio con esito + dati.
  *
- * @author Ayoub Hammou 					761589
- * @author Esau Alessandro Argueta Zepeda 	761748
+ * @author Ayoub Hammou                     761589
+ * @author Esau Alessandro Argueta Zepeda   761748
  */
 public class Messaggio implements Serializable {
-	private static final long serialVersionUID = 4L;
-    // Costanti per le operazioni (evita stringhe sparse nel codice)
+    private static final long serialVersionUID = 4L;
+
+    // Costanti per le operazioni
     public static final String OP_LOGIN           = "LOGIN";
     public static final String OP_REGISTRA        = "REGISTRA";
     public static final String OP_CERCA_RISTORANTI = "CERCA_RISTORANTI";
@@ -50,20 +51,56 @@ public class Messaggio implements Serializable {
     }
 
     public void addParam(String chiave, String valore) {
-        params.put(chiave, valore);
+        if (this.params == null) {
+            this.params = new HashMap<>();
+        }
+        if (chiave != null) {
+            // Evita di inserire "null" come stringa nei parametri
+            this.params.put(chiave, valore != null ? valore.trim() : "");
+        }
     }
 
     public String getParam(String chiave) {
-        return params.getOrDefault(chiave, "");
+        if (params == null) return "";
+        String val = params.get(chiave);
+        return val != null ? val : "";
+    }
+
+    /**
+     * Verifica se un parametro esiste e non è vuoto.
+     */
+    public boolean hasParam(String chiave) {
+        if (params == null) return false;
+        String val = params.get(chiave);
+        return val != null && !val.trim().isEmpty();
     }
 
     public String getOperazione() { return operazione; }
     public void setOperazione(String o) { this.operazione = o; }
-    public Map<String, String> getParams() { return params; }
+    
+    public Map<String, String> getParams() { 
+        if (params == null) params = new HashMap<>();
+        return params; 
+    }
+    public void setParams(Map<String, String> params) { 
+        this.params = params != null ? params : new HashMap<>(); 
+    }
+
     public String getEsito() { return esito; }
     public void setEsito(String e) { this.esito = e; }
+    
     public String getDatiJson() { return datiJson; }
     public void setDatiJson(String d) { this.datiJson = d; }
 
     public boolean isOk() { return ESITO_OK.equals(esito); }
+
+    @Override
+    public String toString() {
+        return "Messaggio{" +
+                "operazione='" + operazione + '\'' +
+                ", params=" + params +
+                ", esito='" + esito + '\'' +
+                ", datiJson='" + datiJson + '\'' +
+                '}';
+    }
 }
