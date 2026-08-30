@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <move todir="C:\Users\Eaaz0\Desktop\theknife/doc/javadoc" failonerror="false" overwrite="true">
+      <fileset dir="C:\Users\Eaaz0\Desktop\theknife/doc/javadoc/apidocs" erroronmissingdir="false" />
+    </move>
+    <delete failonerror="false" dir="C:\Users\Eaaz0\Desktop\theknife/doc/javadoc/apidocs" />
+  </target>
+</project>
