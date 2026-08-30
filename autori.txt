@@ -1,1 +1,4 @@
-autori
+Informazioni autori  
+Argueta Zepeda Esau Alessandro 761748 Sede di Varese 
+Hammou Ayoub                   761589 Sede di Varese
+link github: https://github.com/ERDISCO/theknife.git
