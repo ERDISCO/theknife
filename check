@@ -1,0 +1,16 @@
+- [x] `mvn package` compila senza errori
+- [ ] `java -jar bin/serverTK.jar` si avvia e chiede credenziali DB
+- [ ] `java -jar bin/clientTK.jar` si connette al server
+- [ ] Guest può cercare ristoranti per città
+- [ ] Cliente può fare login[x], scrivere/modificare/eliminare recensione, gestire preferiti
+- [ ] Gestore può fare login[x], aggiungere ristorante, rispondere a recensioni
+- [ ] Due client aperti contemporaneamente non si bloccano a vicenda
+- [x] Password cifrate nel DB (verificate in pgAdmin)
+- [x] Tutti i `.java` hanno intestazione nome/cognome/matricola
+- [ ] Tutti i `.java` hanno JavaDoc su classi e metodi pubblici
+- [ ] `doc/ManualeUtente.pdf` con screenshot
+- [ ] `doc/ManualeTecnico.pdf` con UML e ER
+- [ ] `doc/javadoc/` generata da Maven
+- [ ] `autori.txt` nella root
+- [ ] `README.txt` nella root con istruzioni complete
+- [ ] `doc/db/create_tables.sql` nel repo

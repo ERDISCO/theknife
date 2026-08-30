@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>theknife</groupId>
+    <artifactId>theknife</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
+    <name>TheKnife</name>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- ============================================================
+             CONFIGURAZIONE DATABASE POSTGRESQL
+             Modifica questi valori con le tue credenziali locali.
+
+             psql.exe e pg_restore.exe devono essere nel PATH di sistema,
+             oppure modifica psql.path e pgrestore.path con il percorso
+             completo alla cartella bin di PostgreSQL.
+             Esempio Windows: C:\Program Files\PostgreSQL\18\bin\psql.exe
+        ============================================================ -->
+        <db.host>localhost</db.host>
+        <db.port>5432</db.port>
+        <db.name>theknife_db</db.name>
+        <db.user>postgres</db.user>
+        <db.password>kebab</db.password>
+
+        <!--
+            Se psql non e' nel PATH, sostituisci "psql" con il percorso
+            completo, es:
+            C:\Program Files\PostgreSQL\18\bin\psql.exe
+        -->
+        <psql.exe>C:\Program Files\PostgreSQL\18\bin\psql.exe</psql.exe>
+        <pgrestore.exe>C:\Program Files\PostgreSQL\18\bin\pg_restore.exe</pgrestore.exe>
+
+        <!-- Dump in doc/theknife_db.sql (formato custom pg_dump -Fc) -->
+        <db.dump>${project.basedir}/doc/theknife_db.sql</db.dump>
+    </properties>
+
+    <!-- ================================================================
+         DIPENDENZE
+    ================================================================ -->
+    <dependencies>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>at.favre.lib</groupId>
+            <artifactId>bcrypt</artifactId>
+            <version>0.10.2</version>
+        </dependency>
+
+    </dependencies>
+
+    <!-- ================================================================
+         BUILD
+    ================================================================ -->
+    <build>
+
+        <plugins>
+
+            <!-- ────────────────────────────────────────────────────────
+                 1. BUILD-HELPER – aggiunge src/ come source folder
+                 Evita il conflitto M2E "Cannot nest src/main/resources
+                 inside src/" che si presenta con <sourceDirectory>.
+            ──────────────────────────────────────────────────────────── -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>add-source</goal></goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ────────────────────────────────────────────────────────
+                 2. COMPILATORE
+            ──────────────────────────────────────────────────────────── -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                    <compilerArgs>
+                        <arg>-Xlint:none</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <!-- ────────────────────────────────────────────────────────
+                 3. FAT JAR – maven-shade-plugin
+                 Due eseguibili in bin/:
+                   theknife-client-1.0.jar  main: theknife.gui.AppGUI
+                   theknife-server-1.0.jar  main: theknife.server.ServerTK
+
+                 shadedArtifactAttached=false su entrambe le execution
+                 evita che le due shade si sovrascrivano il manifest
+                 a vicenda (causa del ClassNotFoundException sul server).
+            ──────────────────────────────────────────────────────────── -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+
+                    <!-- FAT JAR CLIENT -->
+                    <execution>
+                        <id>shade-client</id>
+                        <phase>package</phase>
+                        <goals><goal>shade</goal></goals>
+                        <configuration>
+                            <outputFile>${project.basedir}/bin/theknife-client-1.0.jar</outputFile>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>theknife.gui.AppGUI</mainClass>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+
+                    <!-- FAT JAR SERVER -->
+                    <execution>
+                        <id>shade-server</id>
+                        <phase>package</phase>
+                        <goals><goal>shade</goal></goals>
+                        <configuration>
+                            <outputFile>${project.basedir}/bin/theknife-server-1.0.jar</outputFile>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>theknife.server.ServerTK</mainClass>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+
+            <!-- ────────────────────────────────────────────────────────
+                 4. JAVADOC → doc/javadoc/
+                 Comando standalone: mvn javadoc:javadoc
+                 Il plugin genera sempre una sottocartella apidocs/;
+                 il task antrun (plugin 6) la sposta su in javadoc/.
+            ──────────────────────────────────────────────────────────── -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <sourcepath>${project.basedir}/src</sourcepath>
+                    <outputDirectory>${project.basedir}/doc/javadoc</outputDirectory>
+                    <encoding>UTF-8</encoding>
+                    <charset>UTF-8</charset>
+                    <docencoding>UTF-8</docencoding>
+                    <doclint>none</doclint>
+                    <failOnError>false</failOnError>
+                    <quiet>true</quiet>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-javadoc</id>
+                        <phase>package</phase>
+                        <goals><goal>javadoc</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ────────────────────────────────────────────────────────
+                 5. CREAZIONE DATABASE POSTGRESQL
+                 Dump in formato CUSTOM (pg_dump -Fc): usa pg_restore.
+
+                 Comandi IN ORDINE:
+                   mvn exec:exec@create-db   → crea theknife_db se non esiste
+                   mvn exec:exec@load-dump   → carica schema e dati
+
+                 Se psql non e' nel PATH modificare la property
+                 <psql.exe> e <pgrestore.exe> in cima al pom.
+            ──────────────────────────────────────────────────────────── -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+
+                    <execution>
+                        <id>create-db</id>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>${psql.exe}</executable>
+                            <environmentVariables>
+                                <PGPASSWORD>${db.password}</PGPASSWORD>
+                            </environmentVariables>
+                            <!-- CREATE DATABASE non supporta IF NOT EXISTS in PostgreSQL.
+                                 Si usa -c con un semplice CREATE DATABASE e si ignora
+                                 l'errore se il database esiste gia' tramite successExitValues. -->
+                            <successCodes>
+                                <successCode>0</successCode>
+                                <successCode>1</successCode>
+                            </successCodes>
+                            <arguments>
+                                <argument>-h</argument><argument>${db.host}</argument>
+                                <argument>-p</argument><argument>${db.port}</argument>
+                                <argument>-U</argument><argument>${db.user}</argument>
+                                <argument>-d</argument><argument>postgres</argument>
+                                <argument>-c</argument>
+                                <argument>CREATE DATABASE ${db.name};</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>load-dump</id>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>${pgrestore.exe}</executable>
+                            <environmentVariables>
+                                <PGPASSWORD>${db.password}</PGPASSWORD>
+                            </environmentVariables>
+                            <arguments>
+                                <argument>-h</argument><argument>${db.host}</argument>
+                                <argument>-p</argument><argument>${db.port}</argument>
+                                <argument>-U</argument><argument>${db.user}</argument>
+                                <argument>-d</argument><argument>${db.name}</argument>
+                                <argument>--no-owner</argument>
+                                <argument>--no-privileges</argument>
+                                <argument>${db.dump}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+
+            <!-- ────────────────────────────────────────────────────────
+                 6. ANTRUN – due task durante mvn package:
+                 a) Genera script di avvio in bin/ (.bat e .sh)
+                 b) Sposta doc/javadoc/apidocs/* su in doc/javadoc/
+                    ed elimina la cartella apidocs/ ormai vuota
+            ──────────────────────────────────────────────────────────── -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+
+                    <!-- a) Script di avvio -->
+                    <execution>
+                        <id>generate-launch-scripts</id>
+                        <phase>package</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.basedir}/bin"/>
+
+                                <echo file="${project.basedir}/bin/avvia-server.bat" encoding="UTF-8">@echo off
+title TheKnife - Server
+cd /d "%~dp0"
+java -jar theknife-server-1.0.jar
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERRORE] Il server si e' fermato con codice %ERRORLEVEL%.
+    pause
+)
+</echo>
+
+                                <echo file="${project.basedir}/bin/avvia-client.bat" encoding="UTF-8">@echo off
+title TheKnife - Client
+cd /d "%~dp0"
+java -jar theknife-client-1.0.jar
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERRORE] Il client si e' fermato con codice %ERRORLEVEL%.
+    pause
+)
+</echo>
+
+                                <echo file="${project.basedir}/bin/avvia-server.sh" encoding="UTF-8">#!/bin/bash
+cd "$(dirname "$0")"
+java -jar theknife-server-1.0.jar
+</echo>
+                                <chmod file="${project.basedir}/bin/avvia-server.sh" perm="755"/>
+
+                                <echo file="${project.basedir}/bin/avvia-client.sh" encoding="UTF-8">#!/bin/bash
+cd "$(dirname "$0")"
+java -jar theknife-client-1.0.jar
+</echo>
+                                <chmod file="${project.basedir}/bin/avvia-client.sh" perm="755"/>
+                            </target>
+                        </configuration>
+                    </execution>
+
+                    <!-- b) Sposta javadoc da apidocs/ a javadoc/ -->
+                    <execution>
+                        <id>flatten-javadoc</id>
+                        <phase>package</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <move todir="${project.basedir}/doc/javadoc"
+                                      overwrite="true"
+                                      failonerror="false">
+                                    <fileset dir="${project.basedir}/doc/javadoc/apidocs"
+                                             erroronmissingdir="false"/>
+                                </move>
+                                <delete dir="${project.basedir}/doc/javadoc/apidocs"
+                                        failonerror="false"/>
+                            </target>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+
+            <!-- ────────────────────────────────────────────────────────
+                 7. COPIA dipendenze in lib/
+                 Durante mvn package scarica i JAR delle dipendenze
+                 e li copia in lib/ come richiesto dalla consegna.
+            ──────────────────────────────────────────────────────────── -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals><goal>copy-dependencies</goal></goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/lib</outputDirectory>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+
+        <!-- ============================================================
+             PLUGIN MANAGEMENT – solo per Eclipse M2E
+        ============================================================ -->
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>build-helper-maven-plugin</artifactId>
+                                        <versionRange>[1.0,)</versionRange>
+                                        <goals><goal>add-source</goal></goals>
+                                    </pluginExecutionFilter>
+                                    <action><execute/></action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-javadoc-plugin</artifactId>
+                                        <versionRange>[3.0,)</versionRange>
+                                        <goals><goal>javadoc</goal></goals>
+                                    </pluginExecutionFilter>
+                                    <action><ignore/></action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+    </build>
+
+</project>

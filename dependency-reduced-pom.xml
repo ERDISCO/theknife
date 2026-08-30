@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>theknife</groupId>
+  <artifactId>theknife</artifactId>
+  <name>TheKnife</name>
+  <version>1.0</version>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <versionRange>[1.0,)</versionRange>
+                    <goals>
+                      <goal>add-source</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <execute />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <versionRange>[3.0,)</versionRange>
+                    <goals>
+                      <goal>javadoc</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.basedir}/src</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <source>21</source>
+          <target>21</target>
+          <compilerArgs>
+            <arg>-Xlint:none</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <id>shade-client</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <outputFile>${project.basedir}/bin/theknife-client-1.0.jar</outputFile>
+              <transformers>
+                <transformer>
+                  <mainClass>theknife.gui.AppGUI</mainClass>
+                </transformer>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+          <execution>
+            <id>shade-server</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <outputFile>${project.basedir}/bin/theknife-server-1.0.jar</outputFile>
+              <transformers>
+                <transformer>
+                  <mainClass>theknife.server.ServerTK</mainClass>
+                </transformer>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.10.1</version>
+        <executions>
+          <execution>
+            <id>generate-javadoc</id>
+            <phase>package</phase>
+            <goals>
+              <goal>javadoc</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <sourcepath>${project.basedir}/src</sourcepath>
+          <outputDirectory>${project.basedir}/doc</outputDirectory>
+          <destDir>javadoc</destDir>
+          <encoding>UTF-8</encoding>
+          <charset>UTF-8</charset>
+          <docencoding>UTF-8</docencoding>
+          <doclint>none</doclint>
+          <failOnError>false</failOnError>
+          <quiet>true</quiet>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.4.1</version>
+        <executions>
+          <execution>
+            <id>create-db</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>psql</executable>
+              <environmentVariables>
+                <PGPASSWORD>${db.password}</PGPASSWORD>
+              </environmentVariables>
+              <arguments>
+                <argument>-h</argument>
+                <argument>${db.host}</argument>
+                <argument>-p</argument>
+                <argument>${db.port}</argument>
+                <argument>-U</argument>
+                <argument>${db.user}</argument>
+                <argument>-c</argument>
+                <argument>SELECT 'CREATE DATABASE ${db.name}' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname='${db.name}')\gexec</argument>
+                <argument>postgres</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>load-dump</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>pg_restore</executable>
+              <environmentVariables>
+                <PGPASSWORD>${db.password}</PGPASSWORD>
+              </environmentVariables>
+              <arguments>
+                <argument>-h</argument>
+                <argument>${db.host}</argument>
+                <argument>-p</argument>
+                <argument>${db.port}</argument>
+                <argument>-U</argument>
+                <argument>${db.user}</argument>
+                <argument>-d</argument>
+                <argument>${db.name}</argument>
+                <argument>--no-owner</argument>
+                <argument>--no-privileges</argument>
+                <argument>${db.dump}</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>generate-launch-scripts</id>
+            <phase>package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <mkdir />
+                <echo>@echo off
+title TheKnife - Server
+cd /d "%~dp0"
+java -jar theknife-server-1.0.jar
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERRORE] Il server si e' fermato con codice di errore %ERRORLEVEL%.
+    pause
+)</echo>
+                <echo>@echo off
+title TheKnife - Client
+cd /d "%~dp0"
+java -jar theknife-client-1.0.jar
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERRORE] Il client si e' fermato con codice di errore %ERRORLEVEL%.
+    pause
+)</echo>
+                <echo>#!/bin/bash
+cd "$(dirname "$0")"
+java -jar theknife-server-1.0.jar</echo>
+                <chmod />
+                <echo>#!/bin/bash
+cd "$(dirname "$0")"
+java -jar theknife-client-1.0.jar</echo>
+                <chmod />
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  <repositories>
+    <repository>
+      <id>lib-local</id>
+      <url>file://${project.basedir}/lib</url>
+    </repository>
+  </repositories>
+  <properties>
+    <db.password>postgres</db.password>
+    <db.dump>${project.basedir}/doc/theknife_db.sql</db.dump>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <db.user>postgres</db.user>
+    <db.port>5432</db.port>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <db.host>localhost</db.host>
+    <db.name>theknife_db</db.name>
+  </properties>
+</project>
